@@ -4,14 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using Dapper.Contrib.Extensions;
-
-namespace Preceda.HealthCheck.STP.Entities
+namespace Preceda.HealthCheck.Import.Entities
 {
-    [Table("SystemValidationDetail")]
-    class ValidationDetail
+    [TableName("SystemValidationDetail")]
+    public class ValidationDetail
     {
-        [ExplicitKey]
+        [KeyField]
         public Guid Id { get; set; }
         public string Database { get; set; }
         public string ApplicationKey { get; set; }

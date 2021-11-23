@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Preceda.HealthCheck": {
+      "commandName": "Project"
+    },
+    "Silent Mode": {
+      "commandName": "Project",
+      "commandLineArgs": "--silent"
+    }
+  }
+}

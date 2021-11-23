@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using Preceda.HealthCheck.STP.Entities;
+using Preceda.HealthCheck.Import.Entities;
 
-namespace Preceda.HealthCheck.STP
+namespace Preceda.HealthCheck.Import
 {
     class UnitOfWork : IDisposable
     {

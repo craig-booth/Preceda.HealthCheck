@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Data.OleDb;
 using System.Globalization;
+using System.Data.Common;
 
-namespace Preceda.HealthCheck.STP.Export
+namespace Preceda.HealthCheck.ISeries
 {
     static class ISeriesDbTypeConversion
     {
 
-        public static DateTime GetISeriesDate(this OleDbDataReader reader, int ordinal)
+        public static DateTime GetISeriesDate(this DbDataReader reader, int ordinal)
         {
             var dateValue = reader.GetString(ordinal);
 
@@ -21,7 +21,7 @@ namespace Preceda.HealthCheck.STP.Export
                 return new DateTime(0001, 01, 01);
         }
 
-        public static TimeSpan GetISeriesTime(this OleDbDataReader reader, int ordinal)
+        public static TimeSpan GetISeriesTime(this DbDataReader reader, int ordinal)
         {
             var timeSpanValue = reader.GetString(ordinal);
 
@@ -31,7 +31,7 @@ namespace Preceda.HealthCheck.STP.Export
                 return new TimeSpan(00, 00, 00);
         }
 
-        public static DateTime GetISeriesTimeStamp(this OleDbDataReader reader, int ordinal)
+        public static DateTime GetISeriesTimeStamp(this DbDataReader reader, int ordinal)
         {
             var timeStampValue = reader.GetString(ordinal);
 
