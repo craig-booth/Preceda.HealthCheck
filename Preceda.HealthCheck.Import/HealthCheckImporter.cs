@@ -109,19 +109,23 @@ namespace Preceda.HealthCheck.Import
             var databases = _DataExtractor.GetDatabases(validation);
             await foreach (var database in databases)
             {
-                database.Id = validation.Id;
-                var exportedDatabase = new ExportedDatabase(database);
- 
-                var details = _DataExtractor.GetDetails(database);
-                await foreach (var detail in details)
+                try
                 {
-                    detail.Id = validation.Id;
-                    exportedDatabase.Details.Add(detail);
-                }
+                    database.Id = validation.Id;
+                    var exportedDatabase = new ExportedDatabase(database);
 
-                _Queue.Enqueue(exportedDatabase);
-                _DatabasesRead++;
-                OnProgressChanged();
+                    var details = _DataExtractor.GetDetails(database);
+                    await foreach (var detail in details)
+                    {
+                        detail.Id = validation.Id;
+                        exportedDatabase.Details.Add(detail);
+                    }
+
+                    _Queue.Enqueue(exportedDatabase);
+                    _DatabasesRead++;
+                    OnProgressChanged();
+                }
+                catch { }
             }
 
             _ExportComplete = true;
@@ -135,14 +139,18 @@ namespace Preceda.HealthCheck.Import
                 {
                     using (var unitOfWork = new UnitOfWork(_DbConnection))
                     {
-                        await unitOfWork.DatabaseRepository.Add(exportedDatabase.Database);
+                        try
+                        {
+                            await unitOfWork.DatabaseRepository.Add(exportedDatabase.Database);
 
-                        await unitOfWork.DetailRepository.Add(exportedDatabase.Details); 
+                            await unitOfWork.DetailRepository.Add(exportedDatabase.Details);
 
-                        unitOfWork.Save();
+                            unitOfWork.Save();
 
-                        _DatabasesWritten++;
-                        OnProgressChanged();
+                            _DatabasesWritten++;
+                            OnProgressChanged();
+                        }
+                        catch { }
                     }
                 }
                 else
