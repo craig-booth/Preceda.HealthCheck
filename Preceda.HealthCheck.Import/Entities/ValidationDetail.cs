@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Preceda.HealthCheck.DataLayer;
+
+
 namespace Preceda.HealthCheck.Import.Entities
 {
     [TableName("SystemValidationDetail")]

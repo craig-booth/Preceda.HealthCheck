@@ -13,7 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Preceda.HealthCheck.DataLayer\Preceda.HealthCheck.DataLayer.csproj" />
     <ProjectReference Include="..\Preceda.HealthCheck.Import\Preceda.HealthCheck.Import.csproj" />
+    <ProjectReference Include="..\Preceda.SystemUsage.Import\Preceda.SystemUsage.Import.csproj" />
   </ItemGroup>
 
 </Project>

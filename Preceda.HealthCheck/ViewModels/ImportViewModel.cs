@@ -1,19 +1,22 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Security;
+using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 
 using Booth.WpfControls;
 
+using Preceda.HealthCheck.DataLayer;
 using Preceda.HealthCheck.Import;
-using Preceda.HealthCheck.ISeries;
+using Preceda.SystemUsage.Import;
+
 
 namespace Preceda.HealthCheck.ViewModels
 {
     class ImportViewModel : INotifyPropertyChanged
     {
-        private const string _ConnectionString = "Server=srv-tpg-qa-db1;Database=PrecedaHealthChecks;User Id=StatsCollection;Password=C8Fev4!5YI;";
+        private const string _HealthCheckConnectionString = "Server=srv-tpg-qa-db1;Database=PrecedaHealthChecks;User Id=StatsCollection;Password=C8Fev4!5YI;";
+        private const string _SystemUsageConnectionString = "Server=srv-tpg-qa-db1;Database=PrecedaSystemUsage;User Id=StatsCollection;Password=C8Fev4!5YI;";
 
         private string _Server;
         public string Server
@@ -145,7 +148,7 @@ namespace Preceda.HealthCheck.ViewModels
         public RelayCommand SaveConfigCommand { get; private set; }
         public async void SaveConfig()
         {
-            var connection = new MySqlConnection(_ConnectionString);
+            var connection = new MySqlConnection(_HealthCheckConnectionString);
             await connection.OpenAsync();
 
             var importConfig = new ImportConfiguration(connection)
@@ -162,7 +165,7 @@ namespace Preceda.HealthCheck.ViewModels
 
         public async void LoadConfig()
         {
-            var connection = new MySqlConnection(_ConnectionString);
+            var connection = new MySqlConnection(_HealthCheckConnectionString);
             await connection.OpenAsync();
 
             var importConfig = new ImportConfiguration(connection);
@@ -178,6 +181,15 @@ namespace Preceda.HealthCheck.ViewModels
         public RelayCommand ImportCommand { get; private set; }
         public async void Import()
         {
+            await ImportData(_HealthCheckConnectionString, new HealthCheckImporterFactory("STP"));
+
+            await ImportData(_HealthCheckConnectionString, new HealthCheckImporterFactory("YE"));
+
+            await ImportData(_SystemUsageConnectionString, new SystemUsageImporterFactory());
+        }
+
+        private async Task ImportData(string connectionString, IDataImporterFactory importerFactory)
+        {
             _ImportInProgress = true;
             DatabaseCount = 0;
             DatabasesRead = 0;
@@ -185,23 +197,18 @@ namespace Preceda.HealthCheck.ViewModels
             DatabasesPerSecond = 0.0;
             TimeRemaining = new TimeSpan(0, 0, 0);
 
-            var connection = new MySqlConnection(_ConnectionString);
+            var connection = new MySqlConnection(connectionString);
             await connection.OpenAsync();
-           
-            using (var extractor = new ISeriesDataExtractor(Server, UserName, Password))
-            {
-                var importer = new HealthCheckImporter(connection, extractor);
-                importer.ImportCompleteEvent += Importer_ImportCompleteEvent;
-                importer.ImportProgressEvent += Importer_ImportProgressEvent;
 
-                _ImportStartTime = DateTime.Now;
+            var dataImporter = importerFactory.CreateImporter(connection, Server, UserName, Password);
 
-                var id = Guid.NewGuid();
-                await importer.ImportSTPHealthCheck(id);
+            dataImporter.ImportCompleteEvent += Importer_ImportCompleteEvent;
+            dataImporter.ImportProgressEvent += Importer_ImportProgressEvent;
 
-                id = Guid.NewGuid();
-                await importer.ImportYearEndHealthCheck(id);
-            } 
+            _ImportStartTime = DateTime.Now;
+
+            var id = Guid.NewGuid();
+            await dataImporter.Import(id);
 
             await connection.CloseAsync();
         }

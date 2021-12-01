@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Preceda.HealthCheck.Import"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Preceda.HealthCheck", "Preceda.HealthCheck\Preceda.HealthCheck.csproj", "{96647F61-F7BB-4862-83D6-DD4138CF94F1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Preceda.SystemUsage.Import", "Preceda.SystemUsage.Import\Preceda.SystemUsage.Import.csproj", "{DCC8D9B0-59E3-471B-AA53-26A262723EDB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Preceda.HealthCheck.DataLayer", "Preceda.HealthCheck.DataLayer\Preceda.HealthCheck.DataLayer.csproj", "{FBC55156-9B03-40BB-95A1-4B8999F1395D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{96647F61-F7BB-4862-83D6-DD4138CF94F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{96647F61-F7BB-4862-83D6-DD4138CF94F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{96647F61-F7BB-4862-83D6-DD4138CF94F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCC8D9B0-59E3-471B-AA53-26A262723EDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCC8D9B0-59E3-471B-AA53-26A262723EDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCC8D9B0-59E3-471B-AA53-26A262723EDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCC8D9B0-59E3-471B-AA53-26A262723EDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBC55156-9B03-40BB-95A1-4B8999F1395D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBC55156-9B03-40BB-95A1-4B8999F1395D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBC55156-9B03-40BB-95A1-4B8999F1395D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBC55156-9B03-40BB-95A1-4B8999F1395D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

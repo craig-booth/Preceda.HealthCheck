@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Reflection;
 
-namespace Preceda.HealthCheck.Import
+namespace Preceda.HealthCheck.DataLayer
 {
     static class SqlBuilder
     {
@@ -22,10 +22,9 @@ namespace Preceda.HealthCheck.Import
             {
                 builder.Append('`');
                 builder.Append(key);
-                builder.Append("` = \"");
-
+                builder.Append("` = ");
                 builder.Append(SQLValue(id));
-                builder.Append("\" AND ");
+                builder.Append(" AND ");
             }
             builder.Remove(builder.Length - 4, 4);
 
@@ -48,10 +47,10 @@ namespace Preceda.HealthCheck.Import
             {
                 builder.Append('`');
                 builder.Append(field.Item1);
-                builder.Append("` = \"");
+                builder.Append("` = ");
 
                 builder.Append(SQLValue(field.Item2));
-                builder.Append("\", ");
+                builder.Append(", ");
             }
             builder.Remove(builder.Length - 2, 2);
 
@@ -60,10 +59,10 @@ namespace Preceda.HealthCheck.Import
             {
                 builder.Append('`');
                 builder.Append(key.Item1);
-                builder.Append("` = \"");
+                builder.Append("` = ");
 
                 builder.Append(key.Item2);
-                builder.Append("\" AND ");
+                builder.Append(" AND ");
             }
             builder.Remove(builder.Length - 4, 4);
 
@@ -86,13 +85,26 @@ namespace Preceda.HealthCheck.Import
             {
                 builder.Append('`');
                 builder.Append(key);
-                builder.Append("` = \"");
+                builder.Append("` = ");
                 builder.Append(SQLValue(id));
-                builder.Append("\" AND ");
+                builder.Append(" AND ");
             }
             builder.Remove(builder.Length - 4, 4);
 
             builder.Append(';');
+
+            return builder.ToString();
+        }
+
+        public static string DeleteAllCommand<T>() where T : class
+        {
+            var builder = new StringBuilder(1024);
+
+            var type = typeof(T);
+
+            builder.Append("DELETE FROM `");
+            builder.Append(TableName<T>());
+            builder.Append("`;");
 
             return builder.ToString();
         }
@@ -117,9 +129,8 @@ namespace Preceda.HealthCheck.Import
             builder.Append(") VALUES(");
             foreach (var value in FieldValues<T>(entity))
             {
-                builder.Append("\"");
                 builder.Append(value);
-                builder.Append("\",");
+                builder.Append(",");
             }
             builder.Remove(builder.Length - 1, 1);
             builder.Append(");");
@@ -231,22 +242,22 @@ namespace Preceda.HealthCheck.Import
         {
             var type = typeof(T);
             if (type == typeof(DateTime))
-                return ((DateTime)value).ToString("yyyy-MM-dd hh:MM:ss");
+                return '"' + ((DateTime)value).ToString("yyyy-MM-dd hh:MM:ss") + '"';
             else if (type == typeof(TimeSpan))
-                return ((TimeSpan)value).ToString(@"hh\:mm\:ss");
+                return '"' + ((TimeSpan)value).ToString(@"hh\:mm\:ss") + '"';
             else
-                return value.ToString();
+                return '"' + value.ToString().Replace("\"", "\"\"") + '"';
         }
 
         private static string SQLValue(object value)
         {
             var type = typeof(object);
             if (type == typeof(DateTime))
-                return ((DateTime)value).ToString("yyyy-MM-dd hh:MM:ss");
+                return '"' + ((DateTime)value).ToString("yyyy-MM-dd hh:MM:ss") + '"';
             else if (type == typeof(TimeSpan))
-                return ((TimeSpan)value).ToString(@"hh\:mm\:ss");
+                return '"' + ((TimeSpan)value).ToString(@"hh\:mm\:ss") + '"';
             else
-                return value.ToString();
+                return '"' + value.ToString().Replace("\"", "\"\"") + '"';
         }
     }
 

@@ -4,64 +4,60 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data;
+using System.Collections.Concurrent;
+
+using Preceda.HealthCheck.DataLayer;
 
 using Preceda.HealthCheck.Import.Entities;
-using System.Collections.Concurrent;
-using System.Threading;
 
 namespace Preceda.HealthCheck.Import
 {
-
-
-    public class HealthCheckImporter
+    public class HealthCheckImporterFactory : IDataImporterFactory
     {
-        private readonly IDbConnection _DbConnection;
-        private readonly IDataExtractor _DataExtractor;
+        private readonly string _Type;
+
+        public HealthCheckImporterFactory(string type)
+        {
+            _Type = type;
+        }
+        public IDataImporter CreateImporter(IDbConnection dBConnection, string server, string userName, string password)
+        {
+            var dataExtractor = new HealthCheckDataDataExtractor(server, userName, password);
+
+            if (_Type == "STP")
+                return new StpHealthCheckImporter(dBConnection, dataExtractor);
+            else if (_Type == "YE")
+                return new YearEndHealthCheckImporter(dBConnection, dataExtractor);
+            else
+                throw new NotSupportedException();
+        }
+    }
+
+    public abstract class HealthCheckImporter : IDataImporter
+    {
+        protected readonly IDbConnection _DbConnection;
+        protected readonly IHealthCheckDataExtractor _DataExtractor;
     
         public event EventHandler<ImportProgressEventArgs> ImportProgressEvent;
         public event EventHandler ImportCompleteEvent;
         
-        private int _DatabaseCount;
-        private int _DatabasesRead;
-        private int _DatabasesWritten;
+        protected int _DatabaseCount;
+        protected int _DatabasesRead;
+        protected int _DatabasesWritten;
 
-        private bool _ExportComplete;
+        protected bool _ExportComplete;
 
-        private ConcurrentQueue<ExportedDatabase> _Queue = new ConcurrentQueue<ExportedDatabase>();
+        protected ConcurrentQueue<ExportedDatabase> _Queue = new ConcurrentQueue<ExportedDatabase>();
 
-        public HealthCheckImporter(IDbConnection dBConnection, IDataExtractor extractor)
+        public HealthCheckImporter(IDbConnection dBConnection, IHealthCheckDataExtractor extractor)
         {
             _DbConnection = dBConnection;
             _DataExtractor = extractor;
         }
 
-        public async Task ImportSTPHealthCheck(Guid id)
-        {
-            var validation = new ValidationRun()
-            {
-                Id = id,
-                Description = "Single Touch Payroll",
-                RunDate = DateTime.Today,
-                ValidationProgram = "STPHC001C"
-            };
+        public abstract Task Import(Guid id);
 
-            await Import(validation);
-        }
-
-        public async Task ImportYearEndHealthCheck(Guid id)
-        {
-            var validation = new ValidationRun()
-            {
-                Id = id,
-                Description = "Year End",
-                RunDate = DateTime.Today,
-                ValidationProgram = "YEHC010C"
-            };
-
-            await Import(validation);
-        }
-
-        class ExportedDatabase
+        protected class ExportedDatabase
         {
             public ValidationDatabase Database;
             public List<ValidationDetail> Details = new List<ValidationDetail>();
@@ -70,9 +66,9 @@ namespace Preceda.HealthCheck.Import
             {
                 Database = database;
             }
-        }
-
-        private async Task Import(ValidationRun validation)
+        } 
+    
+        protected async Task ImportValidation(ValidationRun validation)
         {
             _Queue.Clear();
 
@@ -83,7 +79,7 @@ namespace Preceda.HealthCheck.Import
             _ExportComplete = false;
 
             // Add Run Header
-            using (var unitOfWork = new UnitOfWork(_DbConnection))
+            using (var unitOfWork = new HealthCheckUnitOfWork(_DbConnection))
             {
                 await unitOfWork.RunRepository.Delete(validation.Id);
                 await unitOfWork.DatabaseRepository.Delete(validation.Id);
@@ -100,9 +96,8 @@ namespace Preceda.HealthCheck.Import
 
             await Task.WhenAll(new[] { exportTask, importTask });
 
-            OnImportComplete();
+            OnImportComplete(); 
         }
-
         private async Task ExportDatabases(ValidationRun validation)
         {
             // Add each database to the queue
@@ -129,15 +124,15 @@ namespace Preceda.HealthCheck.Import
             }
 
             _ExportComplete = true;
-        }
-
+        } 
+    
         private async Task ImportDatabases(ValidationRun validation)
         {
             while (true)
             {
                 if (_Queue.TryDequeue(out var exportedDatabase))
                 {
-                    using (var unitOfWork = new UnitOfWork(_DbConnection))
+                    using (var unitOfWork = new HealthCheckUnitOfWork(_DbConnection))
                     {
                         try
                         {
@@ -163,7 +158,6 @@ namespace Preceda.HealthCheck.Import
             }
         }
 
-
         protected virtual void OnProgressChanged()
         {
             var @event = ImportProgressEvent;
@@ -177,7 +171,7 @@ namespace Preceda.HealthCheck.Import
                     DatabaseCount = _DatabaseCount
                 });
             }
-        }
+        } 
 
         protected virtual void OnImportComplete()
         {
@@ -186,6 +180,6 @@ namespace Preceda.HealthCheck.Import
             {
                 @event(this, EventArgs.Empty);
             }
-        }
+        } 
     }
 }

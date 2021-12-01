@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Preceda.HealthCheck.Import
+namespace Preceda.HealthCheck.DataLayer
 {
 
     public class ImportProgressEventArgs : EventArgs

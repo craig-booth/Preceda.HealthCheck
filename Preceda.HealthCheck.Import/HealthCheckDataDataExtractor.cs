@@ -5,16 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using Preceda.HealthCheck.Import;
+using Preceda.HealthCheck.DataLayer;
 using Preceda.HealthCheck.Import.Entities;
 
-namespace Preceda.HealthCheck.ISeries
+namespace Preceda.HealthCheck.Import
 {
-    public class ISeriesDataExtractor : IDataExtractor, IDisposable
+    public class HealthCheckDataDataExtractor : IHealthCheckDataExtractor, IDisposable
     {
         private OleDbConnection _Connection;
 
-        public ISeriesDataExtractor(string server, string userName, string password)
+        public HealthCheckDataDataExtractor(string server, string userName, string password)
         {
             var connectionStringBuilder = new OleDbConnectionStringBuilder();
             connectionStringBuilder["Provider"] = "IBMDA400";

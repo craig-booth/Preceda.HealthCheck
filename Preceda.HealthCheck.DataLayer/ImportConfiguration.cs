@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
 
-using Preceda.HealthCheck.Import.Entities;
+using Preceda.HealthCheck.DataLayer.Entities;
 
-namespace Preceda.HealthCheck.Import
+namespace Preceda.HealthCheck.DataLayer
 {
     public class ImportConfiguration
     {          

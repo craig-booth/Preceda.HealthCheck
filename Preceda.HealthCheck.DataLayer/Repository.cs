@@ -8,11 +8,9 @@ using System.Data;
 using Dapper;
 
 
-using Preceda.HealthCheck.Import.Entities;
-
-namespace Preceda.HealthCheck.Import
+namespace Preceda.HealthCheck.DataLayer
 {
-    class Repository<T> where T :class
+    public class Repository<T> where T :class
     {
         private IDbConnection _Connection;
 
@@ -60,6 +58,12 @@ namespace Preceda.HealthCheck.Import
             var sql = SqlBuilder.DeleteByIdCommand<T>(id);
             await _Connection.ExecuteAsync(sql);
         }
-            
+
+        public async Task DeleteAll()
+        {
+            var sql = SqlBuilder.DeleteAllCommand<T>();
+            await _Connection.ExecuteAsync(sql);
+        }
+
     }
 }

@@ -9,7 +9,7 @@ using Preceda.HealthCheck.Import.Entities;
 namespace Preceda.HealthCheck.Import
 {
 
-    public interface IDataExtractor
+    public interface IHealthCheckDataExtractor
     {
         Task<int> GetDatabaseCount(ValidationRun run);
         IAsyncEnumerable<ValidationDatabase> GetDatabases(ValidationRun run);

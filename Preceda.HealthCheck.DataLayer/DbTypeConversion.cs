@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using System.Globalization;
 using System.Data.Common;
 
-namespace Preceda.HealthCheck.ISeries
+namespace Preceda.HealthCheck.DataLayer
 {
-    static class ISeriesDbTypeConversion
+    public static class DbTypeConversion
     {
 
         public static DateTime GetISeriesDate(this DbDataReader reader, int ordinal)

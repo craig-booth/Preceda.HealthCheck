@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Preceda.HealthCheck.Import.Entities
+namespace Preceda.HealthCheck.DataLayer.Entities
 {
     [TableName("Configuration")]
     class Configuration
