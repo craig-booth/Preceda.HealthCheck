@@ -36,6 +36,7 @@ namespace Preceda.HealthCheck
             if (arguments.ContainsKey("--silent"))
             {
                 viewModel.Import();
+                Shutdown();
             }
             else
             {
