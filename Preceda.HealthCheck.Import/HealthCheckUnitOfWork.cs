@@ -18,12 +18,12 @@ namespace Preceda.HealthCheck.Import
         public Repository<ValidationDetail> DetailRepository { get; private set; }
 
 
-        public HealthCheckUnitOfWork(IDbConnection connection)
-             : base(connection)
+        public HealthCheckUnitOfWork(string connectionString)
+             : base(connectionString)
         {
-            RunRepository = new Repository<ValidationRun>(connection);
-            DatabaseRepository = new Repository<ValidationDatabase>(connection);
-            DetailRepository = new Repository<ValidationDetail>(connection);
+            RunRepository = new Repository<ValidationRun>(_Connection);
+            DatabaseRepository = new Repository<ValidationDatabase>(_Connection);
+            DetailRepository = new Repository<ValidationDetail>(_Connection);
         }
     }
 }

@@ -16,6 +16,6 @@ namespace Preceda.HealthCheck.DataLayer
 
     public interface IDataImporterFactory
     {
-        IDataImporter CreateImporter(IDbConnection dBConnection, string server, string userName, string password);
+        IDataImporter CreateImporter(string sqlServerConnectionString, string iSeriesConnectionString);
     }
 }

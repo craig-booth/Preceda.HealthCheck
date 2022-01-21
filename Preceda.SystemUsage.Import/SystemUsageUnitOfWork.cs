@@ -16,13 +16,12 @@ namespace Preceda.SystemUsage.Import
         public Repository<UsageDetail> UsageDetailRepository { get; private set; }
         public Repository<UsageItem> UsageItemRepository { get; private set; }
 
-        public SystemUsageUnitOfWork(IDbConnection connection)
-            : base(connection)
+        public SystemUsageUnitOfWork(string connectionString)
+            : base(connectionString)
         {
-
-            UsageDatabaseRepository = new Repository<UsageDatabase>(connection);
-            UsageDetailRepository = new Repository<UsageDetail>(connection);
-            UsageItemRepository = new Repository<UsageItem>(connection);
+            UsageDatabaseRepository = new Repository<UsageDatabase>(_Connection);
+            UsageDetailRepository = new Repository<UsageDetail>(_Connection);
+            UsageItemRepository = new Repository<UsageItem>(_Connection);
         }
     }
 }

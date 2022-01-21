@@ -13,8 +13,8 @@ namespace Preceda.HealthCheck.Import
     public class StpHealthCheckImporter : HealthCheckImporter
     {
 
-        public StpHealthCheckImporter(IDbConnection dBConnection, IHealthCheckDataExtractor extractor)
-            : base(dBConnection, extractor)
+        public StpHealthCheckImporter(string sqlServerConnectionString, string iSeriesConnectionString)
+            : base(sqlServerConnectionString, iSeriesConnectionString)
         {
 
         }

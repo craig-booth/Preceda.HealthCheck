@@ -20,14 +20,12 @@ namespace Preceda.HealthCheck.Import
         {
             _Type = type;
         }
-        public IDataImporter CreateImporter(IDbConnection dBConnection, string server, string userName, string password)
+        public IDataImporter CreateImporter(string sqlServerConnectionString, string iSeriesConnectionString)
         {
-            var dataExtractor = new HealthCheckDataDataExtractor(server, userName, password);
-
             if (_Type == "STP")
-                return new StpHealthCheckImporter(dBConnection, dataExtractor);
+                return new StpHealthCheckImporter(sqlServerConnectionString, iSeriesConnectionString);
             else if (_Type == "YE")
-                return new YearEndHealthCheckImporter(dBConnection, dataExtractor);
+                return new YearEndHealthCheckImporter(sqlServerConnectionString, iSeriesConnectionString);
             else
                 throw new NotSupportedException();
         }
@@ -35,8 +33,8 @@ namespace Preceda.HealthCheck.Import
 
     public abstract class HealthCheckImporter : IDataImporter
     {
-        protected readonly IDbConnection _DbConnection;
-        protected readonly IHealthCheckDataExtractor _DataExtractor;
+        protected readonly string _SqlServerConnectionString;
+        protected readonly string _ISeriesConnectionString;
     
         public event EventHandler<ImportProgressEventArgs> ImportProgressEvent;
         public event EventHandler ImportCompleteEvent;
@@ -49,10 +47,10 @@ namespace Preceda.HealthCheck.Import
 
         protected ConcurrentQueue<ExportedDatabase> _Queue = new ConcurrentQueue<ExportedDatabase>();
 
-        public HealthCheckImporter(IDbConnection dBConnection, IHealthCheckDataExtractor extractor)
+        public HealthCheckImporter(string sqlServerConnectionString, string iSeriesConnectionString)
         {
-            _DbConnection = dBConnection;
-            _DataExtractor = extractor;
+            _SqlServerConnectionString = sqlServerConnectionString;
+            _ISeriesConnectionString = iSeriesConnectionString;   
         }
 
         public abstract Task Import(Guid id);
@@ -71,15 +69,19 @@ namespace Preceda.HealthCheck.Import
         protected async Task ImportValidation(ValidationRun validation)
         {
             _Queue.Clear();
-
+         
             // Get Count of Databases
-            _DatabaseCount = await _DataExtractor.GetDatabaseCount(validation);
-            _DatabasesRead = 0;
-            _DatabasesWritten = 0;
-            _ExportComplete = false;
+            using (var dataExtractor = new HealthCheckDataDataExtractor(_ISeriesConnectionString))
+            {
+                _DatabaseCount = dataExtractor.GetDatabaseCount(validation);
+                _DatabasesRead = 0;
+                _DatabasesWritten = 0;
+                _ExportComplete = false;
+            }
 
+            
             // Add Run Header
-            using (var unitOfWork = new HealthCheckUnitOfWork(_DbConnection))
+            using (var unitOfWork = new HealthCheckUnitOfWork(_SqlServerConnectionString))
             {
                 await unitOfWork.RunRepository.Delete(validation.Id);
                 await unitOfWork.DatabaseRepository.Delete(validation.Id);
@@ -96,31 +98,37 @@ namespace Preceda.HealthCheck.Import
 
             await Task.WhenAll(new[] { exportTask, importTask });
 
-            OnImportComplete(); 
+            OnImportComplete();
         }
         private async Task ExportDatabases(ValidationRun validation)
         {
             // Add each database to the queue
-            var databases = _DataExtractor.GetDatabases(validation);
-            await foreach (var database in databases)
+            using (var dataExtractor = new HealthCheckDataDataExtractor(_ISeriesConnectionString))
             {
-                try
+                var databases = dataExtractor.GetDatabases(validation);
+                foreach (var database in databases)
                 {
-                    database.Id = validation.Id;
-                    var exportedDatabase = new ExportedDatabase(database);
-
-                    var details = _DataExtractor.GetDetails(database);
-                    await foreach (var detail in details)
+                    try
                     {
-                        detail.Id = validation.Id;
-                        exportedDatabase.Details.Add(detail);
-                    }
+                        database.Id = validation.Id;
+                        var exportedDatabase = new ExportedDatabase(database);
 
-                    _Queue.Enqueue(exportedDatabase);
-                    _DatabasesRead++;
-                    OnProgressChanged();
+                        var details = dataExtractor.GetDetails(database);
+                        foreach (var detail in details)
+                        {
+                            detail.Id = validation.Id;
+                            exportedDatabase.Details.Add(detail);
+                        }
+
+                        _Queue.Enqueue(exportedDatabase);
+                        _DatabasesRead++;
+                        OnProgressChanged();
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
                 }
-                catch { }
             }
 
             _ExportComplete = true;
@@ -132,7 +140,7 @@ namespace Preceda.HealthCheck.Import
             {
                 if (_Queue.TryDequeue(out var exportedDatabase))
                 {
-                    using (var unitOfWork = new HealthCheckUnitOfWork(_DbConnection))
+                    using (var unitOfWork = new HealthCheckUnitOfWork(_SqlServerConnectionString))
                     {
                         try
                         {
@@ -170,7 +178,7 @@ namespace Preceda.HealthCheck.Import
                     DatabasesImported = _DatabasesWritten,
                     DatabaseCount = _DatabaseCount
                 });
-            }
+            } 
         } 
 
         protected virtual void OnImportComplete()
@@ -179,7 +187,7 @@ namespace Preceda.HealthCheck.Import
             if (@event != null)
             {
                 @event(this, EventArgs.Empty);
-            }
+            } 
         } 
     }
 }

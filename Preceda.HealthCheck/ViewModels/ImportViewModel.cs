@@ -9,7 +9,8 @@ using Booth.WpfControls;
 using Preceda.HealthCheck.DataLayer;
 using Preceda.HealthCheck.Import;
 using Preceda.SystemUsage.Import;
-
+using System.IO;
+using System.Data.OleDb;
 
 namespace Preceda.HealthCheck.ViewModels
 {
@@ -181,14 +182,22 @@ namespace Preceda.HealthCheck.ViewModels
         public RelayCommand ImportCommand { get; private set; }
         public async void Import()
         {
-            await ImportData(_HealthCheckConnectionString, new HealthCheckImporterFactory("STP"));
+            var connectionStringBuilder = new OleDbConnectionStringBuilder();
+            connectionStringBuilder["Provider"] = "IBMDA400";
+            connectionStringBuilder["Data Source"] = Server;
+            connectionStringBuilder["User Id"] = UserName;
+            connectionStringBuilder["Password"] = Password;
+            var iSeriesConnectionString = connectionStringBuilder.ConnectionString;
 
-            await ImportData(_HealthCheckConnectionString, new HealthCheckImporterFactory("YE"));
 
-            await ImportData(_SystemUsageConnectionString, new SystemUsageImporterFactory());
+            await ImportData(_HealthCheckConnectionString, iSeriesConnectionString, new HealthCheckImporterFactory("STP"));
+
+            await ImportData(_HealthCheckConnectionString, iSeriesConnectionString, new HealthCheckImporterFactory("YE"));
+
+            await ImportData(_SystemUsageConnectionString, iSeriesConnectionString, new SystemUsageImporterFactory());
         }
 
-        private async Task ImportData(string connectionString, IDataImporterFactory importerFactory)
+        private async Task ImportData(string sqlServerConnectionString, string iSeriesConnectionString, IDataImporterFactory importerFactory)
         {
             _ImportInProgress = true;
             DatabaseCount = 0;
@@ -197,10 +206,7 @@ namespace Preceda.HealthCheck.ViewModels
             DatabasesPerSecond = 0.0;
             TimeRemaining = new TimeSpan(0, 0, 0);
 
-            var connection = new MySqlConnection(connectionString);
-            await connection.OpenAsync();
-
-            var dataImporter = importerFactory.CreateImporter(connection, Server, UserName, Password);
+            var dataImporter = importerFactory.CreateImporter(sqlServerConnectionString, iSeriesConnectionString);
 
             dataImporter.ImportCompleteEvent += Importer_ImportCompleteEvent;
             dataImporter.ImportProgressEvent += Importer_ImportProgressEvent;
@@ -209,8 +215,6 @@ namespace Preceda.HealthCheck.ViewModels
 
             var id = Guid.NewGuid();
             await dataImporter.Import(id);
-
-            await connection.CloseAsync();
         }
 
         private void Importer_ImportProgressEvent(object sender, ImportProgressEventArgs e)

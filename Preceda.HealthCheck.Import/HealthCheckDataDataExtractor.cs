@@ -14,36 +14,30 @@ namespace Preceda.HealthCheck.Import
     {
         private OleDbConnection _Connection;
 
-        public HealthCheckDataDataExtractor(string server, string userName, string password)
+        public HealthCheckDataDataExtractor(string connectionString)
         {
-            var connectionStringBuilder = new OleDbConnectionStringBuilder();
-            connectionStringBuilder["Provider"] = "IBMDA400";
-            connectionStringBuilder["Data Source"] = server;
-            connectionStringBuilder["User Id"] = userName;
-            connectionStringBuilder["Password"] = password;
-
-            _Connection = new OleDbConnection(connectionStringBuilder.ConnectionString);
+            _Connection = new OleDbConnection(connectionString);
             _Connection.Open();
         }
 
-        public async Task<int> GetDatabaseCount(ValidationRun run)
+        public int GetDatabaseCount(ValidationRun run)
         {
             var command = _Connection.CreateCommand();
             command.CommandText = $"select count(*) from SYSVALDTA.SYRPEXLG where SRELPROG='{run.ValidationProgram}'";
 
-            var count =  (int) await command.ExecuteScalarAsync();
+            var count =  (int) command.ExecuteScalar();
 
             return count;
         }
 
-        public async IAsyncEnumerable<ValidationDatabase> GetDatabases(ValidationRun run)
+        public IEnumerable<ValidationDatabase> GetDatabases(ValidationRun run)
         {
             var command = _Connection.CreateCommand();
             command.CommandText = "select SRELDBID, SRELAPPK, SRELDBDS, SRELPART, SRELCTRY, SRELVERS, SRELRNID "
                                 + $" from SYSVALDTA.SYRPEXLG where SRELPROG='{run.ValidationProgram}'";
 
-            var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            var reader = command.ExecuteReader();
+            while (reader.Read())
             {
                 var database = new ValidationDatabase()
                 {
@@ -61,7 +55,7 @@ namespace Preceda.HealthCheck.Import
             }
         }
 
-        public async IAsyncEnumerable<ValidationDetail> GetDetails(ValidationDatabase database)
+        public IEnumerable<ValidationDetail> GetDetails(ValidationDatabase database)
         {
 
             var command = _Connection.CreateCommand();
@@ -71,8 +65,8 @@ namespace Preceda.HealthCheck.Import
                                         + $"from SYSVALDTA.SYRPSRES where SRSRDBID='{database.Database}' and SRSRRNID='{database.RunId}' and SRSRAPPK='{database.ApplicationKey}' ";
 
 
-            var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            var reader = command.ExecuteReader();
+            while (reader.Read())
             {
                 var detail = new ValidationDetail()
                 {

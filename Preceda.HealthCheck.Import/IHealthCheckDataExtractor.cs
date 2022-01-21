@@ -11,8 +11,8 @@ namespace Preceda.HealthCheck.Import
 
     public interface IHealthCheckDataExtractor
     {
-        Task<int> GetDatabaseCount(ValidationRun run);
-        IAsyncEnumerable<ValidationDatabase> GetDatabases(ValidationRun run);
-        IAsyncEnumerable<ValidationDetail> GetDetails(ValidationDatabase database);
+        int GetDatabaseCount(ValidationRun run);
+        IEnumerable<ValidationDatabase> GetDatabases(ValidationRun run);
+        IEnumerable<ValidationDetail> GetDetails(ValidationDatabase database);
     }    
 }

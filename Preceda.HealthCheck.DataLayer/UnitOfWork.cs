@@ -5,17 +5,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using MySql.Data.MySqlClient;
+
 namespace Preceda.HealthCheck.DataLayer
 {
     public class UnitOfWork : IDisposable
     {
-        private IDbConnection _Connection;
-        private IDbTransaction? _Transaction;
+        protected IDbConnection _Connection;
+        protected IDbTransaction? _Transaction;
 
 
-        public UnitOfWork(IDbConnection connection)
+        public UnitOfWork(string connectionString)
         {
-            _Connection = connection;
+            _Connection = new MySqlConnection(connectionString);
+            _Connection.Open();
+
 
             _Transaction = _Connection.BeginTransaction();
         }
@@ -31,6 +35,9 @@ namespace Preceda.HealthCheck.DataLayer
         {
             if (_Transaction != null)
                 _Transaction.Rollback();
+
+            if (_Connection != null)
+                _Connection.Close();
         }
     }
 }

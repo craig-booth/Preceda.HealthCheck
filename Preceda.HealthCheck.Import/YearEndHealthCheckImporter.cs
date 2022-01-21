@@ -11,8 +11,8 @@ namespace Preceda.HealthCheck.Import
 {
     public class YearEndHealthCheckImporter : HealthCheckImporter
     {
-        public YearEndHealthCheckImporter(IDbConnection dBConnection, IHealthCheckDataExtractor extractor)
-            : base(dBConnection, extractor)
+        public YearEndHealthCheckImporter(string sqlServerConnectionString, string iSeriesConnectionString)
+            : base(sqlServerConnectionString, iSeriesConnectionString)
         {
 
         }

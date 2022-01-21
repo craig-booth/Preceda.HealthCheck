@@ -15,15 +15,9 @@ namespace Preceda.SystemUsage.Import
     {
         private OleDbConnection _Connection;
 
-        public SystemUsageDataExtractor(string server, string userName, string password)
+        public SystemUsageDataExtractor(string iSeriesConnectionString)
         {
-            var connectionStringBuilder = new OleDbConnectionStringBuilder();
-            connectionStringBuilder["Provider"] = "IBMDA400";
-            connectionStringBuilder["Data Source"] = server;
-            connectionStringBuilder["User Id"] = userName;
-            connectionStringBuilder["Password"] = password;
-
-            _Connection = new OleDbConnection(connectionStringBuilder.ConnectionString);
+            _Connection = new OleDbConnection(iSeriesConnectionString);
             _Connection.Open();
         }
 

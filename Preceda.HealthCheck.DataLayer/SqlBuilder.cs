@@ -49,7 +49,7 @@ namespace Preceda.HealthCheck.DataLayer
                 builder.Append(field.Item1);
                 builder.Append("` = ");
 
-                builder.Append(SQLValue(field.Item2));
+                builder.Append(field.Item2);
                 builder.Append(", ");
             }
             builder.Remove(builder.Length - 2, 2);

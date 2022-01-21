@@ -15,10 +15,9 @@ namespace Preceda.SystemUsage.Import
 
     public class SystemUsageImporterFactory : IDataImporterFactory
     {
-        public IDataImporter CreateImporter(IDbConnection dBConnection, string server, string userName, string password)
-        {
-            var dataExtractor = new SystemUsageDataExtractor(server, userName, password);
-            var importer = new SystemUsageImporter(dBConnection, dataExtractor);
+        public IDataImporter CreateImporter(string sqlServerConnectionString, string iSeriesConnectionString)
+        {          
+            var importer = new SystemUsageImporter(sqlServerConnectionString, iSeriesConnectionString);
 
             return importer;
         }
@@ -26,9 +25,9 @@ namespace Preceda.SystemUsage.Import
 
     public class SystemUsageImporter : IDataImporter
     {
-        private readonly IDbConnection _DbConnection;
-        private readonly ISystemUsageDataExtractor _DataExtractor;
-    
+        protected readonly string _SqlServerConnectionString;
+        protected readonly string _ISeriesConnectionString;
+
         public event EventHandler<ImportProgressEventArgs> ImportProgressEvent;
         public event EventHandler ImportCompleteEvent;
         
@@ -40,10 +39,10 @@ namespace Preceda.SystemUsage.Import
 
         private ConcurrentQueue<UsageDatabase> _Queue = new ConcurrentQueue<UsageDatabase>();
 
-        public SystemUsageImporter(IDbConnection dBConnection, ISystemUsageDataExtractor extractor)
+        public SystemUsageImporter(string sqlServerConnectionString, string iSeriesConnectionString)
         {
-            _DbConnection = dBConnection;
-            _DataExtractor = extractor;
+            _SqlServerConnectionString = sqlServerConnectionString;
+            _ISeriesConnectionString = iSeriesConnectionString;
         } 
 
         public async Task Import(Guid id)
@@ -51,26 +50,31 @@ namespace Preceda.SystemUsage.Import
             _Queue.Clear();
 
             // Get Count of Databases
-            _DatabaseCount = await _DataExtractor.GetDatabaseCount();
-            _DatabasesRead = 0;
-            _DatabasesWritten = 0;
-            _ExportComplete = false;
-
-            // Add Run Header
-            using (var unitOfWork = new SystemUsageUnitOfWork(_DbConnection))
+            using (var dataExtractor = new SystemUsageDataExtractor(_ISeriesConnectionString))
             {
-                await unitOfWork.UsageDatabaseRepository.DeleteAll();
-                await unitOfWork.UsageDetailRepository.DeleteAll();
-                await unitOfWork.UsageItemRepository.DeleteAll();
-  
-                var items = _DataExtractor.GetItems();
-                await foreach (var item in items)
-                {
-                    await unitOfWork.UsageItemRepository.Add(item);
-                }
+                _DatabaseCount = await dataExtractor.GetDatabaseCount();
+                _DatabasesRead = 0;
+                _DatabasesWritten = 0;
+                _ExportComplete = false;
 
-                unitOfWork.Save(); 
-                OnProgressChanged();
+
+                // Add Run Header
+                using (var unitOfWork = new SystemUsageUnitOfWork(_SqlServerConnectionString))
+                {
+                    await unitOfWork.UsageDatabaseRepository.DeleteAll();
+                    await unitOfWork.UsageDetailRepository.DeleteAll();
+                    await unitOfWork.UsageItemRepository.DeleteAll();
+
+                    // Import Item definitions
+                    var items = dataExtractor.GetItems();
+                    await foreach (var item in items)
+                    {
+                        await unitOfWork.UsageItemRepository.Add(item);
+                    }
+
+                    unitOfWork.Save();
+                    OnProgressChanged();
+                }
             }
 
             var exportTask = Task.Run(() => ExportDatabases());
@@ -84,12 +88,15 @@ namespace Preceda.SystemUsage.Import
         private async Task ExportDatabases()
         {
             // Add each database to the queue
-            var databases = _DataExtractor.GetDatabases();
-            await foreach (var database in databases)
+            using (var dataExtractor = new SystemUsageDataExtractor(_ISeriesConnectionString))
             {
-                _Queue.Enqueue(database);
-                _DatabasesRead++;
-                OnProgressChanged(); 
+                var databases = dataExtractor.GetDatabases();
+                await foreach (var database in databases)
+                {
+                    _Queue.Enqueue(database);
+                    _DatabasesRead++;
+                    OnProgressChanged();
+                }
             }
 
             _ExportComplete = true;
@@ -101,7 +108,7 @@ namespace Preceda.SystemUsage.Import
             {
                 if (_Queue.TryDequeue(out var exportedDatabase))
                 {
-                    using (var unitOfWork = new SystemUsageUnitOfWork(_DbConnection))
+                    using (var unitOfWork = new SystemUsageUnitOfWork(_SqlServerConnectionString))
                     {
                         try
                         {
